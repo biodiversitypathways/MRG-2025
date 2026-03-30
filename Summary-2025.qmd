@@ -48,6 +48,7 @@ nocite: '@*'
 ![Deployment at Rock Garden Slide Site at in the Glacier grid cell (GRTS ID: 271731) in 2025](Images/photos-20250609-193136.jpg)
 :::
 
+{{< pagebreak >}}
 ```{r}
 #| label: Load packages and data
 #| include: false
@@ -67,161 +68,7 @@ library(base64enc)
 library(mapview)
 library(sf)
 
-MR <- read.csv("Data/241002_Mnt.Revelstoke.csv")
-G <- read.csv("Data/271731_Glacier.csv")
-
-MRG <- bind_rows(MR,G)
-
-MRG$Date <- as.Date(MRG$Timestamp)
-MRG$Time <- format(as.POSIXct(MRG$Timestamp, format = "%Y-%m-%d %H:%M:%S"), "%H:%M:%S")
-
-sites <- read.csv("Data/Sites.csv")
-
-```
-
-```{r}
-```
-
-
-```{r}
-#| label: Create final species auto ID
-#| include: false
-#| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-
-# --- Helper: Convert 6-letter Kaleidoscope code to 4-letter code ---
-kal_to_4letter <- function(code) {
-  code <- trimws(code)
-  ifelse(
-    grepl("^[A-Za-z]{6}$", code),
-    paste0(substr(code, 1, 2), substr(code, 4, 5)),
-    code
-  )
-}
-
-# --- Helpers: Separate NOISE, NoID, and blank ---
-is_blank <- function(x) {
-  trimws(x) == "" | is.na(x)
-}
-
-is_no_id <- function(x) {
-  trimws(toupper(x)) %in% c("NOID", "NA") & !is_blank(x)
-}
-
-is_noise <- function(x) {
-  trimws(toupper(x)) == "NOISE"
-}
-
-is_unidentified <- function(x) {
-  is_blank(x) | is_no_id(x) | is_noise(x)
-}
-
-# --- Species group codes (uppercase for consistent matching) ---
-# These are group-level IDs, not resolved to species
-sb_species_groups_upper <- toupper(c("Hif", "Hilo", "Lof"))
-
-is_sb_group <- function(x) {
-  toupper(trimws(x)) %in% sb_species_groups_upper
-}
-
-# ============================================================
-# Main logic: build Final.Spp.Auto.ID
-# ============================================================
-MRG <- MRG %>%
-  mutate(
-    
-    # Step 1: Convert Kaleidoscope to 4-letter code (uppercase)
-    KAL.upper = toupper(kal_to_4letter(trimws(WA.Kaleidoscope.Auto.ID))),
-    
-    # Step 2: Standardize SB code to uppercase
-    SB.upper = toupper(trimws(SB.Species.Auto.ID.verbose)),
-    
-    # Step 3: Apply priority rules
-    Final.Spp.Auto.ID = case_when(
-      
-      # Both blank → leave empty
-      is_blank(KAL.upper) & is_blank(SB.upper) ~ "",
-      
-      # One blank → use whatever the other column has
-      is_blank(KAL.upper) & !is_blank(SB.upper) ~ SB.upper,
-      !is_blank(KAL.upper) & is_blank(SB.upper) ~ KAL.upper,
-      
-      # Both are NoID → NoID
-      is_no_id(KAL.upper) & is_no_id(SB.upper) ~ "NoID",
-      
-      # Both are NOISE → NOISE
-      is_noise(KAL.upper) & is_noise(SB.upper) ~ "NOISE",
-      
-      # Either is NOISE and other is NoID → default to NoID
-      is_noise(KAL.upper) & is_no_id(SB.upper) ~ "NoID",
-      is_no_id(KAL.upper) & is_noise(SB.upper) ~ "NoID",
-      
-      # SB is a species GROUP and KAL has a species ID → use KAL species
-      # (must come BEFORE the disagreement concat rule)
-      is_sb_group(SB.upper) & !is_unidentified(KAL.upper) ~ KAL.upper,
-      
-      # SB is a species GROUP and KAL is unidentified → use SB group
-      is_sb_group(SB.upper) & is_unidentified(KAL.upper) ~ SB.upper,
-      
-      # KAL is unidentified but SB has a resolved species → use SB
-      is_unidentified(KAL.upper) & !is_unidentified(SB.upper) ~ SB.upper,
-      
-      # SB is unidentified but KAL has a resolved species → use KAL
-      !is_unidentified(KAL.upper) & is_unidentified(SB.upper) ~ KAL.upper,
-      
-      # Both agree → use the 4-letter code
-      KAL.upper == SB.upper ~ KAL.upper,
-      
-      # Both have different resolved species → concatenate
-      !is_unidentified(KAL.upper) & !is_unidentified(SB.upper) & KAL.upper != SB.upper ~
-        paste0(pmin(KAL.upper, SB.upper), pmax(KAL.upper, SB.upper)),
-      
-      # Fallback
-      TRUE ~ "NoID"
-    )
-    
-  ) %>%
-  select(-KAL.upper, -SB.upper)
-
-```
-
-```{r}
-#| label: Get list of sites, transects, unique IDs
-#| include: false
-#| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-
-site_dates <- MRG %>%
-  subset(Quadrant!="Transects")%>%
-  group_by(Quadrant)%>%
-  summarize(
-    earliest_date=min(Date, na.rm=TRUE),
-    latest_date=max(Date, na.rm = TRUE),
-    total_days= as.integer(latest_date-earliest_date)+1, 
-    #Format dates to mm-dd
-    earliest_date = format(earliest_date, "%B-%d"),
-    latest_date = format(latest_date, "%B-%d")
-  ) %>%
-  # Sort by site name
-  arrange(Quadrant)
-
-transect_dates <- MRG %>%
-  subset(Quadrant="Transects")%>%
-  group_by(Quadrant)%>%
-  summarize(
-    earliest_date=min(Date, na.rm=TRUE),
-    latest_date=max(Date, na.rm = TRUE),
-    total_days= as.integer(latest_date-earliest_date)+1, 
-    #Format dates to mm-dd
-    earliest_date = format(earliest_date, "%B-%d"),
-    latest_date = format(latest_date, "%B-%d")
-  ) %>%
-  # Sort by site name
-  arrange(Quadrant)
+map_data <- read.csv("Data/summary.data.csv")
 
 ```
 
@@ -233,33 +80,7 @@ transect_dates <- MRG %>%
 #| warning: false
 #| message: false
 
-# ── 1. Summarise species per site ─────────────────────────────────────────────
-exclude_ids <- c("Noise", "NoID", "NOISE", "NOID", "")
-
-species_by_site <- MRG %>%
-  filter(!Final.Spp.Auto.ID %in% exclude_ids,
-         !is.na(Final.Spp.Auto.ID)) %>%
-  mutate(
-    GRTS_Quad = paste0(GRTS.Cell.ID, Quadrant),
-    species_clean = case_when(
-      nchar(Final.Spp.Auto.ID) == 8          ~ "Other",  # couplets
-      Final.Spp.Auto.ID %in% c("HILO", "HIF", "LOF") ~ "Other",  # species groups
-      .default = Final.Spp.Auto.ID
-    )
-  ) %>%
-  count(GRTS_Quad, species_clean, name = "n") %>%
-  rename(species = species_clean)
-
-# ── 2. Join with site coordinates ─────────────────────────────────────────────
-sites_coords <- sites %>%
-  select(GRTS_Quad = Grid.Cell.and.Quadrant,
-         site_name = Site.Quadrant.Name,
-         lat = y, lon = x)
-
-map_data <- species_by_site %>%
-  left_join(sites_coords, by = "GRTS_Quad") %>%
-  filter(!is.na(lat))
-# ── 3. Colour palette ─────────────────────────────────────────────────────────
+# ── 1. Colour palette ─────────────────────────────────────────────────────────
 # SVG pie chart helper 
 make_pie_svg <- function(values, colors, size = 70) {
   total <- sum(values)
@@ -295,12 +116,12 @@ sp_colors <- c(
   "MYVO" = "#9B59B6",   # purple
   "Other" = "#AAAAAA"   # grey
 )
-# ── 5. Build markers ──────────────────────────────────────────────────────────
+# ── 2. Build markers ──────────────────────────────────────────────────────────
 site_list <- map_data %>%
   group_by(GRTS_Quad, site_name, lat, lon) %>%
   summarise(sp_data = list(tibble(species, n)), total = sum(n), .groups = "drop")
 
-# ── 6. Load other shapefiles───────────────────────────────────────────────────
+# ── 3. Load other shapefiles───────────────────────────────────────────────────
 #load shp for grid cell 
 grids <- st_read("Mapping/MRG-NABatGrids.shp") %>%
   st_transform(crs = 4326) #transform to WGS84
@@ -309,7 +130,7 @@ transect <- st_read("Mapping/Transect.shp") %>%
   st_transform(crs = 4326) %>% #transform to WGS84
   st_zm(drop = TRUE, what = "ZM") %>% #drop the Z dimension so it renders
   select(geometry)
-# ── 7. Draw map ───────────────────────────────────────────────────────────────
+# ── 4. Draw map ───────────────────────────────────────────────────────────────
 m <- leaflet() %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(
@@ -399,11 +220,25 @@ m <- m %>% addControl(legend_html, position = "bottomright")
 
 Biodiversity Pathways respectfully acknowledges that our work takes place on Treaty 8 and Douglas Treaties Territories as well as the traditional and unceded territories of First Nations and Métis Peoples across all regions of British Columbia, whose histories, languages, and cultures are deeply connected to the biodiversity we monitor. We acknowledge the traditional teachings of the lands that we work on, and that reciprocal, meaningful, and respectful relationships with Indigenous peoples make our work possible. We are deeply grateful for their stewardship of these lands, and we are committed to supporting Indigenous-led monitoring programs, while learning Indigenous ways of knowing, being, and doing.
 
-# Introduction
+# Background
+
+## Overview of NABat and the NNW Bat Hub
+
+The North American Bat Monitoring Program (NABat) is a large-scale coordinated effort to monitor bat species across North America using standardized protocols and a unified sample design [@loeb2015Plan]. NABat was established to address the gaps in knowledge and lack of long-term studies of bat species across Mexico, USA, and Canada. The program is administered by the US Geological Survey (USGS), coordinated by the Canadian Wildlife Health Cooperative (CWHC) in Canada, and implemented by the North by Northwest Bat (NNW) Hub in British Columbia, Alberta, and S.E. Alaska.
+
+## NABat Motioning at Mount Revelstoke and Glacier National Parks
+
+Mount Revelstoke and Glacier National Parks have monitored two NABat grid cells since 2017 and have collected 9 years of data. Both grid cells are in southeastern BC. Mount Revelstoke contains 2 stationary bat detectors and 1 transect route while Glacier contains 3 stationary detectors, all detectors were deployed in primarily forest habitat.
 
 # Methodology
 
-# Results
+Full-spectrum recordings from the sampling periods were processed using two automatic classifiers: Kaleidoscope's Bats of North America 5.4.0 classifier and Sonobat 3.0's Southeastern British Columbia classifier. Based on documented species ranges, manual identification efforts focused on 10 species: Townsend's big-eared bat (*Corynorhinus townsendii*), Big Brown Bats (*Eptesicus fuscus*), Silver-haired Bats (*Lasionycteris noctivagans*), Hoary Bat (*Lasiurus cinereus*), California Myotis (*Myotis californicus*), Long-eared myotis (*Myotis evotis*), Little Brown Myotis (*Myotis lucifugus*), Northen Myotis (*Myotis spententrionalis*), Long-legged Myotis (*Myotis volans*), and Yuma Myotis (*Myotis yumanensis*).
+
+The analysis workflow followed processing standards established by the North American Bat Monitoring Program (NABat) [@reichert2018Guide]. Only recordings that were identified as a bat by Kaleidoscope were manually verified. Species identifications were validated using reference call parameters described by @szewczak2018Acoustic, @slough2022New, and @solick2022Bat, in accordance with NABat manual vetting protocols [@reichert2018Guide].
+
+# Results and Discussion
+
+All previously detected species were identified again across sites.
 
 ```{r}
 #| echo: false
@@ -467,16 +302,4 @@ if (knitr::is_html_output()) {
 ![Sampled sites and driving transect route in Mount Revelstoke National Park (GRTS 241002). Proportion of species bat passes at each site. Other represents tags that were identified as species couplets or species groups](Figures/Mt__Revelstoke_Sites.png)
 :::
 
-```{r}
-#| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-#| include: true
-#| tbl-cap: Species confirmed via manual verification at Mount Revelstoke and Glacier National Parks
-
-MRG$Species.Manual.ID
-
-```
-
-# Discussion
+All tag data has been uploaded to NABat under project ID: . Recordings and tag data can also be found in Wildtrax
