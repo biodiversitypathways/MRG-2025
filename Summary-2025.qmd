@@ -68,10 +68,16 @@ library(leaflet)
 library(base64enc)
 library(mapview)
 library(sf)
+library(flextable)
+library(purrr)
 
 map_data <- read.csv("Data/summary.data.csv")
 tdata <- read.csv("Data/transect_summary.csv")
 grouped_data <- read.csv("Data/MSummary.csv")
+#clean up grouped_data
+grouped_data <- rename(grouped_data, '40KMYO' = 'X40KMYO')
+GRTS.Cell.ID_header_indices <- which(grouped_data$Site %in% c("241002", "271731"))
+totals_index <- which(grouped_data$Site == "Total")
 ```
 
 ```{r}
@@ -90,9 +96,13 @@ ft <- flextable(grouped_data) |>
   bg(i = totals_index, bg = "#BDD7EE") |>
   fontsize(size = 8, part = "all") |>
   padding(padding = 2, part = "all") |>
-  set_table_properties(layout = "autofit", width = 1) |>
+  set_table_properties(layout = "fixed", width = 1) |>
   rotate(rotation = "btlr", part = "header") |>
-  height(height = 1.5, part = "header")
+  height(height = 1.5, part = "header") |>
+  width(j = "Site",   width = 0.5) |>
+  width(j = c("COTO","EPFU","LACI","LANO","MYCA","MYEV","MYLU",
+               "MYSE","MYVO","MYYU","MYOTIS","40KMYO",
+               "HIF","LOF","FB","SC"), width = 0.35)
 ```
 
 ```{r}
@@ -341,6 +351,16 @@ m <- m %>% addControl(legend_html, position = "bottomright")
 
 ```
 
+```{r}
+#| include: false
+#| label: set up fig reference so it changes based on html or pdf
+fig_ref <- if (knitr::pandoc_to("html")) {
+  "[@fig-monitoring-locations]"
+} else {
+  "[@fig-glacier;@fig-revelstoke]"
+}
+```
+
 # Executive Summary
 
 # Land Acknowledgement
@@ -353,23 +373,25 @@ Biodiversity Pathways respectfully acknowledges that our work takes place on Tre
 
 The North American Bat Monitoring Program (NABat) is a large-scale coordinated effort to monitor bat species across North America using standardized protocols and a unified sample design [@loeb2015Plan]. NABat was established to address the gaps in knowledge and lack of long-term studies of bat species across Mexico, USA, and Canada. The program is administered by the US Geological Survey (USGS), coordinated by the Canadian Wildlife Health Cooperative (CWHC) in Canada, and implemented by the North by Northwest Bat (NNW) Hub in British Columbia, Alberta, and S.E. Alaska.
 
-## NABat Motioning at Mount Revelstoke and Glacier National Parks
+## NABat Monitoring at Mount Revelstoke and Glacier National Parks
 
 Mount Revelstoke and Glacier National Parks have monitored two NABat grid cells since 2017 and have collected 9 years of data. Both grid cells are in southeastern BC. Mount Revelstoke contains 2 stationary bat detectors and 1 transect route while Glacier contains 3 stationary detectors, all detectors were deployed in primarily forest habitat.
 
-In 2025 the transect route was deployed with 2 acoustic recording units: Anabat and EchoMeter Touch Pro. The goal is to evaluate the differences in species detection between the two units.
+In 2025, the transect route was monitored using two acoustic recording units, the Anabat and the EchoMeter Touch Pro, to evaluate differences in species detection between the two detectors. This comparison will inform the park's transition to the EchoMeter Touch Pro for future data collection.
 
 # Methodology
 
 Full-spectrum recordings from the sampling periods were processed using two automatic classifiers: Kaleidoscope's Bats of North America 5.4.0 classifier and Sonobat 3.0's Southeastern British Columbia classifier. Based on documented species ranges, manual identification efforts focused on 10 species: Townsend's big-eared bat (*Corynorhinus townsendii*), Big Brown Bats (*Eptesicus fuscus*), Silver-haired Bats (*Lasionycteris noctivagans*), Hoary Bat (*Lasiurus cinereus*), California Myotis (*Myotis californicus*), Long-eared myotis (*Myotis evotis*), Little Brown Myotis (*Myotis lucifugus*), Northen Myotis (*Myotis spententrionalis*), Long-legged Myotis (*Myotis volans*), and Yuma Myotis (*Myotis yumanensis*).
 
-The analysis workflow followed processing standards established by the North American Bat Monitoring Program (NABat) [@reichert2018Guide]. Only recordings that were identified as a bat by Kaleidoscope were manually verified. Species identifications were validated using reference call parameters described by @szewczak2018Acoustic, @slough2022New, and @solick2022Bat, in accordance with NABat manual vetting protocols [@reichert2018Guide].
+The analysis workflow followed processing standards established by the North American Bat Monitoring Program (NABat) [@reichert2018Guide]. Only recordings that were identified as a bat by Kaleidoscope were eligeble to be manually verified. Species identifications were validated using reference call parameters described by @szewczak2018Acoustic, @slough2022New, and @solick2022Bat, in accordance with NABat manual vetting protocols [@reichert2018Guide]. All species codes used in the analysis are summarized in [Appendix A]
 
 # Results and Discussion
 
 ## Species detection
 
-All previously detected species were identified again across sites. Feeding buzzes were recorded at the NW quadrant of the Mount Revelstoke Grid cell, as well as the SW quadrant of the Glacier grid cell [@tbl-msummary].
+All previously detected species were identified again across sites. Feeding buzzes were recorded in the NW quadrant of the Mount Revelstoke grid cell and the SW quadrant of the Glacier grid cell [@tbl-msummary], and one social call was recorded in the NW quadrant of the Mount Revelstoke cell.
+
+Results from the full dataset, including automated ID, indicate that the most commonly recorded species across both grid cells is the Little Brown Bat (*Myotis lucifugus*; MYLU) (`r fig_ref` ).
 
 ```{r}
 #| echo: false
@@ -377,7 +399,7 @@ All previously detected species were identified again across sites. Feeding buzz
 #| warning: false
 #| message: false
 #| include: true
-#| tbl-cap: Manual verification summary resutls across grid cells and sites. 
+#| tbl-cap: Manual verification summary results across grid cells and sites. 
 #| label: tbl-msummary
 ft
 ```
@@ -388,7 +410,7 @@ ft
 #| warning: false
 #| message: false
 #| include: true
-#| fig-cap: Proportion of species bat passes at each site with from AutoID results. Other represents tags that were identified as species couplets or species groups
+#| fig-cap: Acoustic monitoring sites within the Mount Revelstoke and Glacier National Park NABat grid cells, 2025. Pie charts indicate the proportional composition of bat species detections by AutoID at each site. Click a marker to view species detection totals; click the transect line to view detections by night and recorder.
 #| label: fig-monitoring-locations
 
 if (knitr::is_html_output()) {
@@ -439,15 +461,87 @@ if (knitr::is_html_output()) {
 ```
 
 ::: {.content-visible when-format="pdf"}
-![Sampled sites in Glacier National Park (GRTS 271731). Proportion of species bat passes at each site. Other represents tags that were identified as species couplets or species groups](Figures/Glacier_Sites.png){#fig-glacier}
+![Sampled sites in Glacier National Park (GRTS 271731). Proportion of species bat passes at each site. Other represents tags that were identified as species couplets or species groups](Figures/Glacier_Sites.png){#fig-glacier fig-pos="H"}
 
-![Sampled sites and driving transect route in Mount Revelstoke National Park (GRTS 241002). Proportion of species bat passes at each site. Other represents tags that were identified as species couplets or species groups](Figures/Mt__Revelstoke_Sites.png)
+![Sampled sites and driving transect route in Mount Revelstoke National Park (GRTS 241002). Proportion of species bat passes at each site. Other represents tags that were identified as species couplets or species groups](Figures/Mt__Revelstoke_Sites.png){#fig-revelstoke fig-pos="H"}
 :::
 
 ## Paired deployments for the transect
 
-The EchoMeter Touch Pro, which records in full spectrum, resulted in bat calls that were more easily identifiable to the species level compared to the Anabat zero-cross recorder. However, this difference was not substantial across units, so results from switching to the EchoMeter Touch likely will not require a correction factor. The province-wide analysis will explore the use of correction factors more closely, as it includes up to 20 different sites and transects with paired deployments. If the increased number of data points suggests otherwise, a correction factor can be explored when trend estimates are calculated for this grid cell.
+The EchoMeter Touch Pro, which records in full spectrum, produced bat calls that were more readily identifiable to the species level compared to the Anabat zero-crossing recorder. However, this difference was not substantial between units, suggesting that transitioning to the EchoMeter Touch Pro is unlikely to require a correction factor. The province-wide analysis, which includes up to 20 sites and transects with paired deployments, will examine the use of correction factors more closely. Should that larger dataset suggest otherwise, a correction factor can be revisited when trend estimates are calculated for this grid cell.
 
 ## Data Availability
 
-All tag data has been uploaded to NABat under project ID: . Recordings and tag data can also be found in Wildtrax
+All tag data has been uploaded to NABat under project name [MRG-NABat Monitoring (ID: 16822)](https://sciencebase.usgs.gov/nabat/#/projects/16822). Recordings and tag data can also be found in Wildtrax under the project name [Bat community - Long Terms Monitoring - NaBat - 2024/25](https://portal.wildtrax.ca/aru/4353)
+
+# Appendix A
+
+```{r}
+#| label: speciescodes
+#| include: true
+#| echo: false
+#| warning: false
+#| message: false
+#|
+def <- read.csv("Data/species_codes_reference.csv")
+
+# Split into sections by Type
+type_order <- c("Species", "Couplet/Grouping", "Frequency Class")
+def_ordered <- def |>
+  dplyr::mutate(Type = factor(Type, levels = type_order)) |>
+  dplyr::arrange(Type)
+
+# Columns to display - drop Type since it becomes group headers
+def_display <- def_ordered |>
+  dplyr::select(`Code` = Four.Letter.Code,
+                `Common Name` = Common.Name,
+                `Scientific Name` = Scientific.Name,
+                `Definition` = Definition)
+
+# Find where each Type group starts for header row insertion
+type_indices <- which(!duplicated(def_ordered$Type))
+
+# Build grouped data with type header rows
+grouped_def <- purrr::map_dfr(type_order, function(t) {
+  rows <- def_ordered |> dplyr::filter(Type == t)
+  if (nrow(rows) == 0) return(NULL)
+  
+  header <- data.frame(
+    Code       = t,
+    Common.Name     = "",
+    Scientific.Name = "",
+    Definition      = ""
+  )
+  names(header) <- c("Code", "Common Name", "Scientific Name", "Definition")
+  
+  data_rows <- rows |>
+    dplyr::select(`Code` = Four.Letter.Code,
+                  `Common Name` = Common.Name,
+                  `Scientific Name` = Scientific.Name,
+                  `Definition` = Definition)
+  
+  dplyr::bind_rows(header, data_rows)
+})
+
+# Find header row indices
+header_indices <- which(grouped_def$Code %in% type_order)
+
+flextable(grouped_def) |>
+  bold(i = header_indices) |>
+  bg(i = header_indices, bg = "#BDD7EE") |>
+  merge_h(i = header_indices) |>
+  italic(j = "Scientific Name") |>
+  fontsize(size = 9, part = "all") |>
+  padding(padding = 3, part = "all") |>
+  set_table_properties(layout = "fixed", width = 1) |>
+  width(j = "Code",           width = 0.7) |>
+  width(j = "Common Name",    width = 1.3) |>
+  width(j = "Scientific Name",width = 1.5) |>
+  width(j = "Definition",     width = 3.0)
+```
+
+{{< pagebreak >}}
+
+::: {.content-visible when-format="pdf"}
+# Literature Cited
+:::

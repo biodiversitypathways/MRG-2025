@@ -1,0 +1,26 @@
+Four-Letter Code,Common Name,Scientific Name,Type,Definition
+COTO,Townsend's big-eared bat,Corynorhinus townsendii,Species,
+EPFU,big brown bat,Eptesicus fuscus,Species,
+LANO,silver-haired bat,Lasionycteris noctivagans,Species,
+LACI,hoary bat,Lasiurus cinereus,Species,
+MYCA,California myotis,Myotis californicus,Species,
+MYEV,long-eared myotis,Myotis evotis,Species,
+MYLU,little brown bat,Myotis lucifugus,Species,
+MYSE,northern long-eared bat,Myotis septentrionalis,Species,
+MYVO,long-legged myotis,Myotis volans,Species,
+MYYU,Yuma myotis,Myotis yumanensis,Species,
+EPFULANO,"big brown bat, silver-haired bat","Eptesicus fuscus, Lasionycteris noctivagans",Couplet/Grouping,
+EPFULABO,"big brown bat, eastern red bat","Eptesicus fuscus, Lasiurus borealis",Couplet/Grouping,
+EPFULACI,"big bat, hoary bat","Eptesicus fuscus, Lasiurus cinereus",Couplet/Grouping,
+EPFUMYLU,"big brown bat, little brown bat","Eptesicus fuscus, Myotis lucifugus",Couplet/Grouping,
+LABOMYLU,"eastern red bat, little brown bat","Lasiurus borealis, Myotis lucifugus",Couplet/Grouping,
+LACILANO,"hoary bat, silver-haired bat","Lasiurus cinereus, Lasionycteris noctivagans",Couplet/Grouping,
+MYCAMYYU,"California myotis, Yuma myotis","Myotis californicus, Myotis yumanensis",Couplet/Grouping,
+MYEVMYSE,"long-eared myotis, northern long-eared bat","Myotis evotis, Myotis septentrionalis",Couplet/Grouping,
+MYLUMYSE,"little brown bat, northern long-eared bat","Myotis lucifugus, Myotis septentrionalis",Couplet/Grouping,
+MYLUMYVO,"little brown bat, long-legged myotis","Myotis lucifugus, Myotis volans",Couplet/Grouping,
+MYLUMYYU,"little brown bat, Yuma myotis","Myotis lucifugus, Myotis yumanensis",Couplet/Grouping,
+Myotis,,,Frequency Class,Myotis species
+40kMyo,,,Frequency Class,Various species of Myotis with pulses that have a minimum frequency of approximately 35-45 kHz.
+HighF or HiF,,,Frequency Class,Various species with pulses having a minimum frequency higher than ~30 kHz.
+LowF or LoF,,,Frequency Class,Various species with pulses having a minimum frequency lower than ~30 kHz.
