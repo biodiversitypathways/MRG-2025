@@ -1,0 +1,44 @@
+[
+  {
+    "objectID": "Summary-2025.html",
+    "href": "Summary-2025.html",
+    "title": "North American Bat Monitoring Program in Mount Revelstoke and Glacier National Parks",
+    "section": "",
+    "text": "Deployment at Rock Garden Slide Site at in the Glacier grid cell (GRTS ID: 271731) in 2025"
+  },
+  {
+    "objectID": "Summary-2025.html#overview-of-nabat-and-the-nnw-bat-hub",
+    "href": "Summary-2025.html#overview-of-nabat-and-the-nnw-bat-hub",
+    "title": "North American Bat Monitoring Program in Mount Revelstoke and Glacier National Parks",
+    "section": "Overview of NABat and the NNW Bat Hub",
+    "text": "Overview of NABat and the NNW Bat Hub\nThe North American Bat Monitoring Program (NABat) is a large-scale coordinated effort to monitor bat species across North America using standardized protocols and a unified sample design (Loeb et al. 2015). NABat was established to address the gaps in knowledge and lack of long-term studies of bat species across Mexico, USA, and Canada. The program is administered by the US Geological Survey (USGS), coordinated by the Canadian Wildlife Health Cooperative (CWHC) in Canada, and implemented by the North by Northwest Bat (NNW) Hub in British Columbia, Alberta, and S.E. Alaska."
+  },
+  {
+    "objectID": "Summary-2025.html#nabat-monitoring-at-mount-revelstoke-and-glacier-national-parks",
+    "href": "Summary-2025.html#nabat-monitoring-at-mount-revelstoke-and-glacier-national-parks",
+    "title": "North American Bat Monitoring Program in Mount Revelstoke and Glacier National Parks",
+    "section": "NABat Monitoring at Mount Revelstoke and Glacier National Parks",
+    "text": "NABat Monitoring at Mount Revelstoke and Glacier National Parks\nMount Revelstoke and Glacier National Parks have monitored two NABat grid cells since 2017 and have collected 9 years of data. Both grid cells are in southeastern BC. Mount Revelstoke contains 2 stationary bat detectors and 1 transect route while Glacier contains 3 stationary detectors, all detectors were deployed in primarily forest habitat.\nIn 2025, the transect route was monitored using two acoustic recording units, the Anabat and the EchoMeter Touch Pro, to evaluate differences in species detection between the two detectors. This comparison will inform the park’s transition to the EchoMeter Touch Pro for future data collection."
+  },
+  {
+    "objectID": "Summary-2025.html#species-detection",
+    "href": "Summary-2025.html#species-detection",
+    "title": "North American Bat Monitoring Program in Mount Revelstoke and Glacier National Parks",
+    "section": "Species detection",
+    "text": "Species detection\nAll previously detected species were identified again across sites. Feeding buzzes were recorded in the NW quadrant of the Mount Revelstoke grid cell and the SW quadrant of the Glacier grid cell Table 1, and one social call was recorded in the NW quadrant of the Mount Revelstoke cell.\nResults from the full dataset, including automated ID, indicate that the most commonly recorded species across both grid cells is the Little Brown Bat (Myotis lucifugus; MYLU) (Figure 1 ).\n\n\n\n\nTable 1: Manual verification summary results across grid cells and sites.\n\n\n\nSiteCOTOEPFULACILANOMYCAMYEVMYLUMYSEMYVOMYYUMYOTIS40KMYOHIFLOFFBSC241002NE01340314170100000NW5207298261931713214111Transects0810241111060000140271731SE1100652661270130000SW5013230722902700100Total11292166169647786171215251\n\n\n\n\n\n\n\n\n\n\n\n\n\nFigure 1: Acoustic monitoring sites within the Mount Revelstoke and Glacier National Park NABat grid cells, 2025. Pie charts indicate the proportional composition of bat species detections by AutoID at each site. Click a marker to view species detection totals; click the transect line to view detections by night and recorder."
+  },
+  {
+    "objectID": "Summary-2025.html#paired-deployments-for-the-transect",
+    "href": "Summary-2025.html#paired-deployments-for-the-transect",
+    "title": "North American Bat Monitoring Program in Mount Revelstoke and Glacier National Parks",
+    "section": "Paired deployments for the transect",
+    "text": "Paired deployments for the transect\nThe EchoMeter Touch Pro, which records in full spectrum, produced bat calls that were more readily identifiable to the species level compared to the Anabat zero-crossing recorder. However, this difference was not substantial between units, suggesting that transitioning to the EchoMeter Touch Pro is unlikely to require a correction factor. The province-wide analysis, which includes up to 20 sites and transects with paired deployments, will examine the use of correction factors more closely. Should that larger dataset suggest otherwise, a correction factor can be revisited when trend estimates are calculated for this grid cell."
+  },
+  {
+    "objectID": "Summary-2025.html#data-availability",
+    "href": "Summary-2025.html#data-availability",
+    "title": "North American Bat Monitoring Program in Mount Revelstoke and Glacier National Parks",
+    "section": "Data Availability",
+    "text": "Data Availability\nAll tag data has been uploaded to NABat under project name MRG-NABat Monitoring (ID: 16822). Recordings and tag data can also be found in Wildtrax under the project name Bat community - Long Terms Monitoring - NaBat - 2024/25"
+  }
+]
