@@ -1,0 +1,10 @@
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - Logos/
+    - styles.css
+
+website:
+  title: "North American Bat Monitoring Program in Mount Revelstoke and Glacier National Parks"
+  site-url: https://biodiversitypathways.github.io/MRG-2025/
