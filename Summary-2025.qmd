@@ -49,6 +49,7 @@ nocite: '@*'
 :::
 
 {{< pagebreak >}}
+
 ```{r}
 #| label: Load packages and data
 #| include: false
@@ -69,7 +70,29 @@ library(mapview)
 library(sf)
 
 map_data <- read.csv("Data/summary.data.csv")
+tdata <- read.csv("Data/transect_summary.csv")
+grouped_data <- read.csv("Data/MSummary.csv")
+```
 
+```{r}
+#| label: Prep summary table
+#| include: false
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+ft <- flextable(grouped_data) |>
+  bold(i = GRTS.Cell.ID_header_indices) |>
+  bg(i = GRTS.Cell.ID_header_indices, bg = "#BDD7EE") |>
+  merge_h(i = GRTS.Cell.ID_header_indices) |>
+  bold(i = totals_index) |>
+  bg(i = totals_index, bg = "#BDD7EE") |>
+  fontsize(size = 8, part = "all") |>
+  padding(padding = 2, part = "all") |>
+  set_table_properties(layout = "autofit", width = 1) |>
+  rotate(rotation = "btlr", part = "header") |>
+  height(height = 1.5, part = "header")
 ```
 
 ```{r}
@@ -130,6 +153,108 @@ transect <- st_read("Mapping/Transect.shp") %>%
   st_transform(crs = 4326) %>% #transform to WGS84
   st_zm(drop = TRUE, what = "ZM") %>% #drop the Z dimension so it renders
   select(geometry)
+
+# ── Transect popup ─────────────────────────────────────────────────────────────
+make_transect_table <- function(df, sp_colors) {
+  if (nrow(df) == 0) return("<i>No detections</i>")
+  
+  rows <- purrr::pmap_chr(df, function(Species, n, ...) {
+    col <- if (Species %in% names(sp_colors)) sp_colors[Species] else "#AAAAAA"
+    sprintf(
+      '<tr>
+         <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%%;background:%s;margin-right:4px"></span>%s</td>
+         <td align="right">%s</td>
+       </tr>',
+      col, Species, n
+    )
+  })
+  
+  sprintf(
+    '<table style="width:100%%;font-size:11px;border-collapse:collapse;margin-top:4px">
+       <tr><th align="left">Species</th><th align="right">n</th></tr>
+       %s
+     </table>',
+    paste(rows, collapse = "")
+  )
+}
+
+# Build the three tab content blocks
+all_detections  <- tdata %>% group_by(Species) %>% summarise(n = sum(n), .groups = "drop") %>% arrange(desc(n))
+night1_emt      <- tdata %>% dplyr::filter(Night == 1, Recorder == "EMT") %>% select(Species, n) %>% arrange(desc(n))
+night2_emt      <- tdata %>% dplyr::filter(Night == 2, Recorder == "EMT") %>% select(Species, n) %>% arrange(desc(n))
+night2_anabat   <- tdata %>% dplyr::filter(Night == 2, Recorder == "Anabat") %>% select(Species, n) %>% arrange(desc(n))
+
+tab_all     <- make_transect_table(all_detections, sp_colors)
+tab_n1      <- make_transect_table(night1_emt, sp_colors)
+tab_n2_emt  <- make_transect_table(night2_emt, sp_colors)
+tab_n2_anab <- make_transect_table(night2_anabat, sp_colors)
+
+night2_block <- sprintf(
+  '<p style="margin:6px 0 2px;font-weight:bold;font-size:11px">EMT</p>%s
+   <p style="margin:6px 0 2px;font-weight:bold;font-size:11px">Anabat</p>%s',
+  tab_n2_emt, tab_n2_anab
+)
+
+# Inline tab switching via onclick IIFE — no <script> tags needed
+transect_popup <- sprintf('
+<div style="font-family:sans-serif;min-width:220px;max-width:280px">
+  <b>Driving Transect</b>
+  <hr style="margin:5px 0"/>
+
+  <div style="display:flex;gap:4px;margin-bottom:6px">
+    <button id="ttab-all" onclick="(function(){
+      document.getElementById(\'tc-all\').style.display=\'block\';
+      document.getElementById(\'tc-n1\').style.display=\'none\';
+      document.getElementById(\'tc-n2\').style.display=\'none\';
+      [\'ttab-all\',\'ttab-n1\',\'ttab-n2\'].forEach(function(id){
+        document.getElementById(id).style.fontWeight=\'normal\';
+        document.getElementById(id).style.borderBottom=\'2px solid transparent\';
+      });
+      document.getElementById(\'ttab-all\').style.fontWeight=\'bold\';
+      document.getElementById(\'ttab-all\').style.borderBottom=\'2px solid #1d4566\';
+    })()"
+    style="flex:1;padding:3px 2px;font-size:11px;cursor:pointer;border:none;background:none;border-bottom:2px solid #1d4566;font-weight:bold">
+      All
+    </button>
+
+    <button id="ttab-n1" onclick="(function(){
+      document.getElementById(\'tc-all\').style.display=\'none\';
+      document.getElementById(\'tc-n1\').style.display=\'block\';
+      document.getElementById(\'tc-n2\').style.display=\'none\';
+      [\'ttab-all\',\'ttab-n1\',\'ttab-n2\'].forEach(function(id){
+        document.getElementById(id).style.fontWeight=\'normal\';
+        document.getElementById(id).style.borderBottom=\'2px solid transparent\';
+      });
+      document.getElementById(\'ttab-n1\').style.fontWeight=\'bold\';
+      document.getElementById(\'ttab-n1\').style.borderBottom=\'2px solid #1d4566\';
+    })()"
+    style="flex:1;padding:3px 2px;font-size:11px;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent">
+      Night 1
+    </button>
+
+    <button id="ttab-n2" onclick="(function(){
+      document.getElementById(\'tc-all\').style.display=\'none\';
+      document.getElementById(\'tc-n1\').style.display=\'none\';
+      document.getElementById(\'tc-n2\').style.display=\'block\';
+      [\'ttab-all\',\'ttab-n1\',\'ttab-n2\'].forEach(function(id){
+        document.getElementById(id).style.fontWeight=\'normal\';
+        document.getElementById(id).style.borderBottom=\'2px solid transparent\';
+      });
+      document.getElementById(\'ttab-n2\').style.fontWeight=\'bold\';
+      document.getElementById(\'ttab-n2\').style.borderBottom=\'2px solid #1d4566\';
+    })()"
+    style="flex:1;padding:3px 2px;font-size:11px;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent">
+      Night 2
+    </button>
+  </div>
+
+  <div id="tc-all">%s</div>
+  <div id="tc-n1"  style="display:none">%s</div>
+  <div id="tc-n2"  style="display:none">%s</div>
+</div>',
+  tab_all, tab_n1, night2_block
+)
+
 # ── 4. Draw map ───────────────────────────────────────────────────────────────
 m <- leaflet() %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
@@ -141,9 +266,11 @@ m <- leaflet() %>%
     fillOpacity = 0.3
   ) %>%
   addPolylines(
-    data = transect,
-    color = "#000072",
-    weight = 2
+    data    = transect,
+    color   = "#000072",
+    weight  = 2,
+    popup   = transect_popup,
+    label   = "Driving Transect"
   )
 
 all_pie_colors <- c()  # collect colours as we loop
@@ -230,6 +357,8 @@ The North American Bat Monitoring Program (NABat) is a large-scale coordinated e
 
 Mount Revelstoke and Glacier National Parks have monitored two NABat grid cells since 2017 and have collected 9 years of data. Both grid cells are in southeastern BC. Mount Revelstoke contains 2 stationary bat detectors and 1 transect route while Glacier contains 3 stationary detectors, all detectors were deployed in primarily forest habitat.
 
+In 2025 the transect route was deployed with 2 acoustic recording units: Anabat and EchoMeter Touch Pro. The goal is to evaluate the differences in species detection between the two units.
+
 # Methodology
 
 Full-spectrum recordings from the sampling periods were processed using two automatic classifiers: Kaleidoscope's Bats of North America 5.4.0 classifier and Sonobat 3.0's Southeastern British Columbia classifier. Based on documented species ranges, manual identification efforts focused on 10 species: Townsend's big-eared bat (*Corynorhinus townsendii*), Big Brown Bats (*Eptesicus fuscus*), Silver-haired Bats (*Lasionycteris noctivagans*), Hoary Bat (*Lasiurus cinereus*), California Myotis (*Myotis californicus*), Long-eared myotis (*Myotis evotis*), Little Brown Myotis (*Myotis lucifugus*), Northen Myotis (*Myotis spententrionalis*), Long-legged Myotis (*Myotis volans*), and Yuma Myotis (*Myotis yumanensis*).
@@ -238,7 +367,9 @@ The analysis workflow followed processing standards established by the North Ame
 
 # Results and Discussion
 
-All previously detected species were identified again across sites.
+## Species detection
+
+All previously detected species were identified again across sites. Feeding buzzes were recorded at the NW quadrant of the Mount Revelstoke Grid cell, as well as the SW quadrant of the Glacier grid cell [@tbl-msummary].
 
 ```{r}
 #| echo: false
@@ -246,7 +377,18 @@ All previously detected species were identified again across sites.
 #| warning: false
 #| message: false
 #| include: true
-#| fig-cap: Proportion of species bat passes at each site. Other represents tags that were identified as species couplets or species groups
+#| tbl-cap: Manual verification summary resutls across grid cells and sites. 
+#| label: tbl-msummary
+ft
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| include: true
+#| fig-cap: Proportion of species bat passes at each site with from AutoID results. Other represents tags that were identified as species couplets or species groups
 #| label: fig-monitoring-locations
 
 if (knitr::is_html_output()) {
@@ -301,5 +443,11 @@ if (knitr::is_html_output()) {
 
 ![Sampled sites and driving transect route in Mount Revelstoke National Park (GRTS 241002). Proportion of species bat passes at each site. Other represents tags that were identified as species couplets or species groups](Figures/Mt__Revelstoke_Sites.png)
 :::
+
+## Paired deployments for the transect
+
+The EchoMeter Touch Pro, which records in full spectrum, resulted in bat calls that were more easily identifiable to the species level compared to the Anabat zero-cross recorder. However, this difference was not substantial across units, so results from switching to the EchoMeter Touch likely will not require a correction factor. The province-wide analysis will explore the use of correction factors more closely, as it includes up to 20 different sites and transects with paired deployments. If the increased number of data points suggests otherwise, a correction factor can be explored when trend estimates are calculated for this grid cell.
+
+## Data Availability
 
 All tag data has been uploaded to NABat under project ID: . Recordings and tag data can also be found in Wildtrax
